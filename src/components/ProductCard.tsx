@@ -5,7 +5,6 @@ interface ProductCardProps {
   originalPrice?: number;
   weight: string;
   imageColor: string;
-  image?: string;
   discount?: string;
   badge?: string;
   quantity?: number;
@@ -20,7 +19,6 @@ export function ProductCard({
   originalPrice,
   weight,
   imageColor,
-  image,
   discount,
   badge,
   quantity = 0,
@@ -47,17 +45,9 @@ export function ProductCard({
         className="aspect-square bg-surface-white flex items-center justify-center"
         style={{ backgroundColor: imageColor + "15" }}
       >
-        {image ? (
-          <img
-            src={image}
-            alt={name}
-            className="w-full h-full object-contain p-3 mix-blend-multiply"
-          />
-        ) : (
-          <span className="material-symbols-outlined fill text-[48px]" style={{ color: imageColor }}>
-            icecream
-          </span>
-        )}
+        <span className="material-symbols-outlined fill text-[48px]" style={{ color: imageColor }}>
+          icecream
+        </span>
       </div>
 
       <div className="p-3 flex flex-col flex-grow gap-1.5">

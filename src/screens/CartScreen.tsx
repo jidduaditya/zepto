@@ -77,20 +77,12 @@ export function CartScreen({ cart, discount, onUpdateQuantity, onCheckout, onBac
                       className="w-16 h-16 rounded-lg flex items-center justify-center shrink-0"
                       style={{ backgroundColor: item.product.imageColor + "15" }}
                     >
-                      {item.product.image ? (
-                        <img
-                          src={item.product.image}
-                          alt={item.product.name}
-                          className="w-full h-full object-contain p-1.5 mix-blend-multiply rounded-lg"
-                        />
-                      ) : (
-                        <span
-                          className="material-symbols-outlined fill text-[32px]"
-                          style={{ color: item.product.imageColor }}
-                        >
-                          icecream
-                        </span>
-                      )}
+                      <span
+                        className="material-symbols-outlined fill text-[32px]"
+                        style={{ color: item.product.imageColor }}
+                      >
+                        icecream
+                      </span>
                     </div>
 
                     {/* Details */}
