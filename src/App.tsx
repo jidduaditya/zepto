@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { AppShell } from "./components/AppShell";
 import { EntryScreen } from "./screens/EntryScreen";
 import { SingScreen } from "./screens/SingScreen";
+import { ResultScreen } from "./screens/ResultScreen";
 
 type Screen = "entry" | "sing" | "result";
 
@@ -40,17 +41,11 @@ export default function App() {
 
         {screen === "result" && (
           <motion.div key="result" {...pageTransition} className="h-full">
-            <div className="p-6">
-              <p className="text-zepto-text">
-                Result Screen (Task 7) - Score: {score}
-              </p>
-              <button
-                className="mt-4 bg-zepto-purple text-white px-4 py-2 rounded-lg"
-                onClick={() => setScreen("entry")}
-              >
-                Try Again
-              </button>
-            </div>
+            <ResultScreen
+              score={score}
+              onTryAgain={() => setScreen("sing")}
+              onApply={() => setScreen("entry")}
+            />
           </motion.div>
         )}
       </AnimatePresence>
