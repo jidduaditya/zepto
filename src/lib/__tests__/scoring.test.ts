@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { computeNoteScore, computeOverallScore } from "../scoring";
+import {
+  computeNoteScore,
+  computeOverallScore,
+  scoreSingingQuality,
+} from "../scoring";
 
 describe("computeNoteScore", () => {
   it("returns 100 for a perfect pitch match", () => {
@@ -49,5 +53,51 @@ describe("computeOverallScore", () => {
   it("returns 0 for empty array", () => {
     const score = computeOverallScore([]);
     expect(score).toBe(0);
+  });
+});
+
+describe("scoreSingingQuality", () => {
+  it("returns 0 for no samples", () => {
+    expect(scoreSingingQuality([])).toBe(0);
+  });
+
+  it("returns 0 for all-negative samples", () => {
+    expect(scoreSingingQuality([-1, -1, -1])).toBe(0);
+  });
+
+  it("scores high for stable singing with some melodic range", () => {
+    // Simulate stable singing around 300 Hz with slight variation (natural vibrato)
+    const samples: number[] = [];
+    for (let i = 0; i < 50; i++) {
+      // Alternate between two pitch regions (~300 Hz and ~350 Hz)
+      samples.push(i < 25 ? 300 + Math.random() * 5 : 350 + Math.random() * 5);
+    }
+    const score = scoreSingingQuality(samples);
+    expect(score).toBeGreaterThan(60);
+  });
+
+  it("scores lower for very few pitched samples (weak presence)", () => {
+    const samples = [300, 305, 310]; // only 3 samples out of expected 50
+    const score = scoreSingingQuality(samples);
+    // Presence is low (3/50) but stability+range can still score well
+    // Should be noticeably lower than a full-presence recording
+    expect(score).toBeLessThan(70);
+  });
+
+  it("scores lower for monotone singing (no range)", () => {
+    // 50 samples all at exactly 300 Hz
+    const samples = new Array(50).fill(300);
+    const score = scoreSingingQuality(samples);
+    expect(score).toBeLessThan(75); // good presence + stability but no range
+  });
+
+  it("clamps between 0 and 100", () => {
+    const samples: number[] = [];
+    for (let i = 0; i < 100; i++) {
+      samples.push(300 + Math.random() * 50);
+    }
+    const score = scoreSingingQuality(samples);
+    expect(score).toBeGreaterThanOrEqual(0);
+    expect(score).toBeLessThanOrEqual(100);
   });
 });

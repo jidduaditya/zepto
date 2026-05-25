@@ -36,3 +36,51 @@ export function computeOverallScore(noteScores: number[]): number {
   const sum = noteScores.reduce((a, b) => a + b, 0);
   return Math.round(sum / noteScores.length);
 }
+
+/**
+ * Score singing quality from raw pitch samples (no reference melody).
+ * Evaluates three dimensions:
+ * - Presence (40 pts): did they actually produce pitched sound?
+ * - Stability (30 pts): how consistent/controlled was the pitch?
+ * - Melodic range (30 pts): did they sing with variation (not monotone)?
+ *
+ * Returns 0-100.
+ */
+export function scoreSingingQuality(pitchSamples: number[]): number {
+  const valid = pitchSamples.filter((p) => p > 0);
+  if (valid.length === 0) return 0;
+
+  // Presence: ratio of valid pitch frames to total expected (~50 samples for 2.5s at 20/s)
+  const expectedSamples = 50;
+  const presenceRatio = Math.min(1, valid.length / expectedSamples);
+  const presenceScore = presenceRatio * 40;
+
+  // Stability: lower coefficient of variation = more controlled singing
+  const mean = valid.reduce((a, b) => a + b, 0) / valid.length;
+  const variance =
+    valid.reduce((a, b) => a + (b - mean) ** 2, 0) / valid.length;
+  const stdDev = Math.sqrt(variance);
+  const cv = stdDev / mean; // coefficient of variation
+  // cv < 0.02 = very stable, cv > 0.3 = erratic
+  const stabilityScore = Math.max(0, 30 * (1 - Math.min(1, cv / 0.3)));
+
+  // Melodic range: reward having some pitch variation (singing, not droning)
+  // but not too much (screaming). Sweet spot: 50-400 cents range
+  const sortedValid = [...valid].sort((a, b) => a - b);
+  const low = sortedValid[Math.floor(sortedValid.length * 0.1)];
+  const high = sortedValid[Math.floor(sortedValid.length * 0.9)];
+  const rangeCents = Math.abs(frequencyToCents(high, low));
+  // 0 cents = monotone (0 pts), 50-400 cents = melodic (full pts), >600 = erratic (drops)
+  let rangeScore = 0;
+  if (rangeCents < 50) {
+    rangeScore = (rangeCents / 50) * 30;
+  } else if (rangeCents <= 400) {
+    rangeScore = 30;
+  } else {
+    rangeScore = Math.max(0, 30 * (1 - (rangeCents - 400) / 200));
+  }
+
+  return Math.round(
+    Math.max(0, Math.min(100, presenceScore + stabilityScore + rangeScore))
+  );
+}

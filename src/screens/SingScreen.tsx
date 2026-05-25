@@ -1,33 +1,31 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MelodyPrompt } from "../components/MelodyPrompt";
 import { PitchVisualizer } from "../components/PitchVisualizer";
 import { Button } from "../components/Button";
-import { ICE_CREAM_MELODY, playMelody } from "../lib/melody";
 import { detectPitch } from "../lib/pitch";
-import { computeNoteScore, computeOverallScore } from "../lib/scoring";
+import { scoreSingingQuality } from "../lib/scoring";
 
-type Phase = "ready" | "listen" | "sing" | "analyzing";
+type Phase = "ready" | "countdown" | "sing" | "analyzing";
 
 interface SingScreenProps {
   onComplete: (score: number) => void;
   onBack: () => void;
 }
 
+const SING_DURATION_MS = 2500;
+
 export function SingScreen({ onComplete, onBack }: SingScreenProps) {
   const [phase, setPhase] = useState<Phase>("ready");
-  const [activeNote, setActiveNote] = useState(-1);
   const [levels, setLevels] = useState<number[]>([]);
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [timeLeft, setTimeLeft] = useState(SING_DURATION_MS);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const rafRef = useRef<number>(0);
-  const pitchSamplesRef = useRef<number[][]>([[], []]);
+  const pitchSamplesRef = useRef<number[]>([]);
 
   const cleanup = useCallback(() => {
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
     streamRef.current?.getTracks().forEach((t) => t.stop());
     audioCtxRef.current?.close();
     audioCtxRef.current = null;
@@ -51,21 +49,8 @@ export function SingScreen({ onComplete, onBack }: SingScreenProps) {
       source.connect(analyser);
       analyserRef.current = analyser;
 
-      // Phase 1: Play the reference melody
-      setPhase("listen");
-      setActiveNote(0);
-
-      const melody = ICE_CREAM_MELODY;
-
-      for (let i = 0; i < melody.length; i++) {
-        setActiveNote(i);
-        await playMelody(ctx, [melody[i]]);
-        await new Promise((r) => setTimeout(r, 200));
-      }
-      setActiveNote(-1);
-
-      // Brief pause, then countdown
-      await new Promise((r) => setTimeout(r, 300));
+      // Countdown
+      setPhase("countdown");
       setCountdown(3);
       await new Promise((r) => setTimeout(r, 800));
       setCountdown(2);
@@ -74,56 +59,44 @@ export function SingScreen({ onComplete, onBack }: SingScreenProps) {
       await new Promise((r) => setTimeout(r, 800));
       setCountdown(null);
 
-      // Phase 2: User sings
+      // Sing phase -- just listen
       setPhase("sing");
-      pitchSamplesRef.current = [[], []];
+      pitchSamplesRef.current = [];
+      const startTime = Date.now();
 
-      for (let i = 0; i < melody.length; i++) {
-        setActiveNote(i);
-        const noteDuration = melody[i].duration * 1000;
-        const startTime = Date.now();
+      while (Date.now() - startTime < SING_DURATION_MS) {
+        const buffer = new Float32Array(analyser.fftSize);
+        analyser.getFloatTimeDomainData(buffer);
 
-        while (Date.now() - startTime < noteDuration) {
-          const buffer = new Float32Array(analyser.fftSize);
-          analyser.getFloatTimeDomainData(buffer);
-
-          const pitch = detectPitch(buffer, ctx.sampleRate);
-          if (pitch > 0) {
-            pitchSamplesRef.current[i].push(pitch);
-          }
-
-          const freqData = new Uint8Array(analyser.frequencyBinCount);
-          analyser.getByteFrequencyData(freqData);
-          const barLevels: number[] = [];
-          const step = Math.floor(freqData.length / 20);
-          for (let b = 0; b < 20; b++) {
-            barLevels.push(freqData[b * step] / 255);
-          }
-          setLevels(barLevels);
-
-          await new Promise((r) => setTimeout(r, 50));
+        const pitch = detectPitch(buffer, ctx.sampleRate);
+        if (pitch > 0) {
+          pitchSamplesRef.current.push(pitch);
         }
+
+        // Update visualizer
+        const freqData = new Uint8Array(analyser.frequencyBinCount);
+        analyser.getByteFrequencyData(freqData);
+        const barLevels: number[] = [];
+        const step = Math.floor(freqData.length / 20);
+        for (let b = 0; b < 20; b++) {
+          barLevels.push(freqData[b * step] / 255);
+        }
+        setLevels(barLevels);
+        setTimeLeft(Math.max(0, SING_DURATION_MS - (Date.now() - startTime)));
+
+        await new Promise((r) => setTimeout(r, 50));
       }
 
-      // Phase 3: Analyze
+      // Analyze
       setPhase("analyzing");
-      setActiveNote(-1);
       setLevels([]);
 
-      const noteScores = ICE_CREAM_MELODY.map((note, i) => {
-        const samples = pitchSamplesRef.current[i];
-        if (samples.length === 0) return 0;
-        const sorted = [...samples].sort((a, b) => a - b);
-        const median = sorted[Math.floor(sorted.length / 2)];
-        return computeNoteScore(median, note.frequency);
-      });
-
-      const overall = computeOverallScore(noteScores);
+      const score = scoreSingingQuality(pitchSamplesRef.current);
 
       await new Promise((r) => setTimeout(r, 1200));
 
       cleanup();
-      onComplete(overall);
+      onComplete(score);
     } catch {
       cleanup();
       onComplete(Math.floor(Math.random() * 40) + 30);
@@ -152,9 +125,9 @@ export function SingScreen({ onComplete, onBack }: SingScreenProps) {
             Sing for Your Scoop
           </h2>
           <p className="text-[14px] text-zepto-text-secondary mt-1">
-            {phase === "ready" && "Match the melody to unlock your discount"}
-            {phase === "listen" && "Listen to the melody..."}
-            {phase === "sing" && "Your turn! Sing it back"}
+            {phase === "ready" && "Sing 'Ice Cream' to unlock your discount"}
+            {phase === "countdown" && "Get ready..."}
+            {phase === "sing" && "Sing 'Ice Cream' now!"}
             {phase === "analyzing" && "Analyzing your performance..."}
           </p>
         </div>
@@ -163,6 +136,7 @@ export function SingScreen({ onComplete, onBack }: SingScreenProps) {
         <AnimatePresence>
           {countdown !== null && (
             <motion.div
+              key={countdown}
               initial={{ scale: 2, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.5, opacity: 0 }}
@@ -175,18 +149,50 @@ export function SingScreen({ onComplete, onBack }: SingScreenProps) {
           )}
         </AnimatePresence>
 
-        {/* Melody prompt */}
-        <MelodyPrompt
-          melody={ICE_CREAM_MELODY}
-          activeIndex={activeNote}
-          phase={phase === "listen" ? "listen" : phase === "sing" ? "sing" : "idle"}
-        />
+        {/* Word prompts during singing */}
+        {phase === "sing" && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex items-center justify-center gap-6"
+          >
+            <motion.div
+              animate={{
+                scale: [1, 1.15, 1],
+                backgroundColor: ["#6C2BD9", "#E91E8C", "#6C2BD9"],
+              }}
+              transition={{ duration: 1.2, repeat: Infinity }}
+              className="w-20 h-20 rounded-full flex items-center justify-center"
+            >
+              <span className="text-[22px] font-bold text-white">Ice</span>
+            </motion.div>
+            <motion.div
+              animate={{
+                scale: [1, 1.15, 1],
+                backgroundColor: ["#E91E8C", "#6C2BD9", "#E91E8C"],
+              }}
+              transition={{ duration: 1.2, repeat: Infinity, delay: 0.6 }}
+              className="w-20 h-20 rounded-full flex items-center justify-center"
+            >
+              <span className="text-[22px] font-bold text-white">Cream</span>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* Timer bar during singing */}
+        {phase === "sing" && (
+          <div className="w-full max-w-[260px] h-[6px] bg-zepto-border rounded-full overflow-hidden">
+            <motion.div
+              className="h-full bg-zepto-purple rounded-full"
+              initial={{ width: "100%" }}
+              animate={{ width: "0%" }}
+              transition={{ duration: SING_DURATION_MS / 1000, ease: "linear" }}
+            />
+          </div>
+        )}
 
         {/* Visualizer */}
-        <PitchVisualizer
-          levels={levels}
-          isActive={phase === "sing"}
-        />
+        <PitchVisualizer levels={levels} isActive={phase === "sing"} />
 
         {/* Analyzing spinner */}
         {phase === "analyzing" && (
