@@ -2,6 +2,7 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { AppShell } from "./components/AppShell";
 import { EntryScreen } from "./screens/EntryScreen";
+import { SingScreen } from "./screens/SingScreen";
 
 type Screen = "entry" | "sing" | "result";
 
@@ -27,18 +28,13 @@ export default function App() {
 
         {screen === "sing" && (
           <motion.div key="sing" {...pageTransition} className="h-full">
-            <div className="p-6">
-              <p className="text-zepto-text">Sing Screen (Task 6)</p>
-              <button
-                className="mt-4 bg-zepto-purple text-white px-4 py-2 rounded-lg"
-                onClick={() => {
-                  setScore(78);
-                  setScreen("result");
-                }}
-              >
-                Simulate Score
-              </button>
-            </div>
+            <SingScreen
+              onComplete={(s) => {
+                setScore(s);
+                setScreen("result");
+              }}
+              onBack={() => setScreen("entry")}
+            />
           </motion.div>
         )}
 
