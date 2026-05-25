@@ -1,8 +1,12 @@
 import { motion } from "framer-motion";
 import { ProductCard } from "../components/ProductCard";
+import { ICE_CREAM_PRODUCTS, type Product } from "../lib/products";
 
 interface EntryScreenProps {
   onSing: () => void;
+  getQuantity: (name: string) => number;
+  onAddToCart: (product: Product) => void;
+  onRemoveFromCart: (name: string) => void;
 }
 
 const CATEGORIES = [
@@ -12,44 +16,9 @@ const CATEGORIES = [
   { icon: "cake", label: "Desserts", bg: "bg-primary-fixed", color: "text-primary" },
 ];
 
-const PRODUCTS = [
-  {
-    name: "Belgian Chocolate Tub",
-    brand: "Kwality Wall's",
-    price: 224,
-    originalPrice: 249,
-    weight: "700 ml",
-    imageColor: "#4A2C2A",
-    image: "https://lh3.googleusercontent.com/aida/ADBb0ug8bz60adta9arN9KW41tvpMJfqZfPBa34QXQEXI7f6tGdWP6nL8wAG-HpKWxkm-Q36UDeFQTks2gVxNk42BQwyWVxgQ04Fgq9D0zklyjCVzWROdUf5PvP6AfNAnZ0uOmEeV9WVN8T8uIIg2ti8c5xoDTHAxHLOQ7fd3ED0Y1a7PzDGn43stBn5ozEYrxyDKGAww-FyzYSM8soZucKvpOAJ5_Zc07nOlw3e4zbPxtFMr7NhccXMM7-rtCU",
-    discount: "10% OFF",
-  },
-  {
-    name: "Butterscotch Bliss",
-    brand: "Amul",
-    price: 175,
-    weight: "500 ml",
-    imageColor: "#D4A843",
-    image: "https://lh3.googleusercontent.com/aida/ADBb0uiVfWNU_OyZZIgrMcrsKngdfPG2MBz7ajsEIkh6VxBC3NzoPiXSyOOMB6CmK8r_72jnsilvLe0_pe0G7nfWvA8CyV7bm9zSwMkkdBH1TRSyZdgQHDOPqQAXAQcsUmR2eB6btwxFL5OOjW2a3UwcjjuT9Tkt6Ee4sNHMsIOG8YxPHe34GFLvBQrwRP4PBmDn--Cp04Sq-wwAriaUC9QV6N5SpH4sdjA14oCukdMSIte9L8pp1VCD-hjeVA",
-    badge: "BEST VALUE",
-  },
-  {
-    name: "Mango Dolly",
-    brand: "Mother Dairy",
-    price: 40,
-    weight: "60 ml",
-    imageColor: "#F5A623",
-    image: "https://lh3.googleusercontent.com/aida/ADBb0uhaIE4WiKsdDVZSqPrW7fc5R4IwMvoEWwdsgdL7q2Q2xbufVa8Kw7z5ohnnRJyba8_8r5cTFQpWaGB9d17723XT0mnBY8sskzBz6MbYCNQuDwLo7Hc8-AxMGCYnW50b1awlsChE_-si6nrPiwvwIKDlC1NSolv244IpXP6afi2AmtNjcuIfkHRI5LDi5yZvA1LTAkZQDrnmQsmYKM15lzySoq5KuO7mZmckV5mHf-slKUzthp9sZLXVrE0",
-  },
-  {
-    name: "Vanilla Cup",
-    brand: "Havmor",
-    price: 30,
-    weight: "80 ml",
-    imageColor: "#FAF0DC",
-  },
-];
+const ENTRY_PRODUCTS = ICE_CREAM_PRODUCTS.slice(0, 4);
 
-export function EntryScreen({ onSing }: EntryScreenProps) {
+export function EntryScreen({ onSing, getQuantity, onAddToCart, onRemoveFromCart }: EntryScreenProps) {
   return (
     <div className="flex flex-col">
       {/* Zepto-style header */}
@@ -137,8 +106,14 @@ export function EntryScreen({ onSing }: EntryScreenProps) {
       <div className="px-4 pb-6">
         <h2 className="font-heading text-[20px] font-bold text-on-surface mb-3">Trending Scoops</h2>
         <div className="grid grid-cols-2 gap-3">
-          {PRODUCTS.map((product) => (
-            <ProductCard key={product.name} {...product} />
+          {ENTRY_PRODUCTS.map((product) => (
+            <ProductCard
+              key={product.name}
+              {...product}
+              quantity={getQuantity(product.name)}
+              onAdd={() => onAddToCart(product)}
+              onRemove={() => onRemoveFromCart(product.name)}
+            />
           ))}
         </div>
       </div>

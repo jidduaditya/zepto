@@ -8,6 +8,9 @@ interface ProductCardProps {
   image?: string;
   discount?: string;
   badge?: string;
+  quantity?: number;
+  onAdd?: () => void;
+  onRemove?: () => void;
 }
 
 export function ProductCard({
@@ -20,6 +23,9 @@ export function ProductCard({
   image,
   discount,
   badge,
+  quantity = 0,
+  onAdd,
+  onRemove,
 }: ProductCardProps) {
   return (
     <div className="bg-surface border border-outline-variant rounded-xl overflow-hidden flex flex-col relative">
@@ -74,9 +80,30 @@ export function ProductCard({
               </span>
             )}
           </div>
-          <button className="bg-surface-white border border-secondary text-secondary rounded-full w-8 h-8 flex items-center justify-center active:bg-secondary active:text-surface-white transition-colors">
-            <span className="material-symbols-outlined text-[20px]">add</span>
-          </button>
+          {quantity > 0 ? (
+            <div className="flex items-center gap-0.5">
+              <button
+                onClick={onRemove}
+                className="w-7 h-7 rounded-full border border-secondary text-secondary flex items-center justify-center active:bg-secondary/10 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[16px]">remove</span>
+              </button>
+              <span className="w-6 text-center text-[14px] font-bold text-on-surface">{quantity}</span>
+              <button
+                onClick={onAdd}
+                className="w-7 h-7 rounded-full bg-secondary text-surface-white flex items-center justify-center active:opacity-80 transition-opacity"
+              >
+                <span className="material-symbols-outlined text-[16px]">add</span>
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={onAdd}
+              className="bg-surface-white border border-secondary text-secondary rounded-full w-8 h-8 flex items-center justify-center active:bg-secondary active:text-surface-white transition-colors"
+            >
+              <span className="material-symbols-outlined text-[20px]">add</span>
+            </button>
+          )}
         </div>
       </div>
     </div>

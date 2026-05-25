@@ -1,8 +1,11 @@
 interface AppShellProps {
   children: React.ReactNode;
+  cartCount?: number;
+  onCartClick?: () => void;
+  onHomeClick?: () => void;
 }
 
-export function AppShell({ children }: AppShellProps) {
+export function AppShell({ children, cartCount = 0, onCartClick, onHomeClick }: AppShellProps) {
   return (
     <div className="min-h-dvh flex items-center justify-center bg-surface-dim p-4">
       {/* Phone frame */}
@@ -24,7 +27,10 @@ export function AppShell({ children }: AppShellProps) {
 
         {/* Bottom nav - Stitch style */}
         <div className="h-16 border-t border-outline-variant shadow-[0_-4px_10px_rgba(0,0,0,0.05)] flex justify-around items-center px-2 bg-surface-white">
-          <button className="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1">
+          <button
+            onClick={onHomeClick}
+            className="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1"
+          >
             <span className="material-symbols-outlined fill text-[22px]">home</span>
             <span className="font-[Inter] text-[10px] font-bold tracking-wider mt-0.5">HOME</span>
           </button>
@@ -36,8 +42,15 @@ export function AppShell({ children }: AppShellProps) {
             <span className="material-symbols-outlined text-[22px]">search</span>
             <span className="font-[Inter] text-[10px] font-bold tracking-wider mt-0.5">SEARCH</span>
           </button>
-          <button className="flex flex-col items-center justify-center text-on-surface-variant opacity-70 px-4 py-1 relative">
-            <span className="absolute top-0 right-2 w-2 h-2 bg-secondary rounded-full" />
+          <button
+            onClick={onCartClick}
+            className="flex flex-col items-center justify-center text-on-surface-variant opacity-70 px-4 py-1 relative"
+          >
+            {cartCount > 0 && (
+              <span className="absolute -top-0.5 right-1 min-w-[18px] h-[18px] bg-secondary rounded-full flex items-center justify-center px-1">
+                <span className="text-[10px] font-bold text-white">{cartCount}</span>
+              </span>
+            )}
             <span className="material-symbols-outlined text-[22px]">shopping_cart</span>
             <span className="font-[Inter] text-[10px] font-bold tracking-wider mt-0.5">CART</span>
           </button>
