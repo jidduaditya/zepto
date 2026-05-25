@@ -46,6 +46,12 @@ export function EntryScreen({ onSing }: EntryScreenProps) {
         <p className="text-[13px] text-zepto-text-secondary mt-0.5">
           Delivered in 10 minutes
         </p>
+        <div className="flex items-center gap-1.5 mt-2">
+          <div className="w-2 h-2 rounded-full bg-zepto-green animate-pulse" />
+          <span className="text-[12px] font-semibold text-zepto-green">
+            8 min delivery
+          </span>
+        </div>
       </div>
 
       {/* Sing for Your Scoop banner */}

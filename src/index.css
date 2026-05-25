@@ -28,4 +28,13 @@
     background: #F5F5F5;
     -webkit-font-smoothing: antialiased;
   }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .no-select {
+    user-select: none;
+    -webkit-user-select: none;
+  }
 }
