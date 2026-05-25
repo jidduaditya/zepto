@@ -66,26 +66,26 @@ describe("scoreSingingQuality", () => {
   });
 
   it("scores high for stable singing with some melodic range", () => {
-    // Simulate stable singing around 300 Hz with variation (~300 samples for 15s)
+    // Simulate stable singing around 300 Hz with variation (~120 samples for 6s)
     const samples: number[] = [];
-    for (let i = 0; i < 300; i++) {
-      samples.push(i < 150 ? 300 + Math.random() * 5 : 350 + Math.random() * 5);
+    for (let i = 0; i < 120; i++) {
+      samples.push(i < 60 ? 300 + Math.random() * 5 : 350 + Math.random() * 5);
     }
     const score = scoreSingingQuality(samples);
     expect(score).toBeGreaterThan(70);
   });
 
   it("scores moderate for very few pitched samples (weak presence)", () => {
-    const samples = [300, 305, 310]; // only 3 samples out of expected 300
+    const samples = [300, 305, 310]; // only 3 samples out of expected 120
     const score = scoreSingingQuality(samples);
-    // Base bonus (15) + some presence + stability, but low overall
+    // Base bonus (15) + some presence + stability via sqrt curve
     expect(score).toBeGreaterThan(15);
-    expect(score).toBeLessThan(80);
+    expect(score).toBeLessThan(85);
   });
 
   it("scores moderate for monotone singing (no range)", () => {
-    // 300 samples all at exactly 300 Hz -- good presence + stability but no range
-    const samples = new Array(300).fill(300);
+    // 120 samples all at exactly 300 Hz -- good presence + stability but no range
+    const samples = new Array(120).fill(300);
     const score = scoreSingingQuality(samples);
     expect(score).toBeGreaterThan(50); // base + full presence + full stability
     expect(score).toBeLessThan(90); // missing range points
@@ -93,7 +93,7 @@ describe("scoreSingingQuality", () => {
 
   it("clamps between 0 and 100", () => {
     const samples: number[] = [];
-    for (let i = 0; i < 400; i++) {
+    for (let i = 0; i < 200; i++) {
       samples.push(300 + Math.random() * 50);
     }
     const score = scoreSingingQuality(samples);

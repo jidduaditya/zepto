@@ -4,8 +4,10 @@ import { AppShell } from "./components/AppShell";
 import { EntryScreen } from "./screens/EntryScreen";
 import { SingScreen } from "./screens/SingScreen";
 import { ResultScreen } from "./screens/ResultScreen";
+import { ShopScreen } from "./screens/ShopScreen";
+import { getDiscountTier } from "./lib/discounts";
 
-type Screen = "entry" | "sing" | "result";
+type Screen = "entry" | "sing" | "result" | "shop";
 
 const pageTransition = {
   initial: { opacity: 0, x: 60 },
@@ -44,7 +46,16 @@ export default function App() {
             <ResultScreen
               score={score}
               onTryAgain={() => setScreen("sing")}
-              onApply={() => setScreen("entry")}
+              onApply={() => setScreen("shop")}
+            />
+          </motion.div>
+        )}
+
+        {screen === "shop" && (
+          <motion.div key="shop" {...pageTransition} className="h-full">
+            <ShopScreen
+              discount={getDiscountTier(score).discount}
+              onBack={() => setScreen("entry")}
             />
           </motion.div>
         )}

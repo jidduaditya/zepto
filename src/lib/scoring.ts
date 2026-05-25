@@ -50,9 +50,9 @@ export function scoreSingingQuality(pitchSamples: number[]): number {
   const valid = pitchSamples.filter((p) => p > 0);
   if (valid.length === 0) return 0;
 
-  // Presence: ratio of valid pitch frames to expected (~300 samples for 15s at 20/s)
+  // Presence: ratio of valid pitch frames to expected (~120 samples for 6s at 20/s)
   // Use sqrt curve so even modest singing gets decent presence credit
-  const expectedSamples = 300;
+  const expectedSamples = 120;
   const presenceRatio = Math.min(1, valid.length / expectedSamples);
   const presenceScore = Math.sqrt(presenceRatio) * 40;
 

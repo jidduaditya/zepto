@@ -11,22 +11,19 @@ interface SingScreenProps {
   onBack: () => void;
 }
 
-const SING_DURATION_MS = 15000;
-
-// Lyrics that cycle during singing
-const LYRICS = ["I", "scream", "for", "ice", "cream"];
+const SING_DURATION_MS = 6000;
 
 export function SingScreen({ onComplete, onBack }: SingScreenProps) {
   const [phase, setPhase] = useState<Phase>("ready");
   const [levels, setLevels] = useState<number[]>([]);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [secondsLeft, setSecondsLeft] = useState(Math.ceil(SING_DURATION_MS / 1000));
-  const [activeWord, setActiveWord] = useState(0);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const pitchSamplesRef = useRef<number[]>([]);
+  const stopRequestedRef = useRef(false);
 
   const cleanup = useCallback(() => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -35,15 +32,6 @@ export function SingScreen({ onComplete, onBack }: SingScreenProps) {
   }, []);
 
   useEffect(() => cleanup, [cleanup]);
-
-  // Word cycling during singing
-  useEffect(() => {
-    if (phase !== "sing") return;
-    const interval = setInterval(() => {
-      setActiveWord((prev) => (prev + 1) % LYRICS.length);
-    }, 800);
-    return () => clearInterval(interval);
-  }, [phase]);
 
   const startListening = async () => {
     try {
@@ -74,9 +62,10 @@ export function SingScreen({ onComplete, onBack }: SingScreenProps) {
       // Sing phase
       setPhase("sing");
       pitchSamplesRef.current = [];
+      stopRequestedRef.current = false;
       const startTime = Date.now();
 
-      while (Date.now() - startTime < SING_DURATION_MS) {
+      while (Date.now() - startTime < SING_DURATION_MS && !stopRequestedRef.current) {
         const buffer = new Float32Array(analyser.fftSize);
         analyser.getFloatTimeDomainData(buffer);
 
@@ -143,38 +132,18 @@ export function SingScreen({ onComplete, onBack }: SingScreenProps) {
           </div>
         )}
 
-        {/* Title */}
-        <div className="text-center mb-6">
-          <h1 className="font-heading text-[24px] font-extrabold text-on-surface italic leading-[30px]">
-            {phase === "ready" && <>Sing: <span className="text-primary">"Ice Cream"</span></>}
-            {phase === "countdown" && "Get Ready..."}
-            {phase === "sing" && <>Sing: <span className="text-primary">"Ice Cream"</span></>}
-            {phase === "analyzing" && "Analyzing..."}
-          </h1>
-          <p className="text-[16px] text-on-surface-variant mt-2">
-            {phase === "ready" && "Speak or sing what you're craving!"}
-            {phase === "sing" && "Keep going!"}
-            {phase === "analyzing" && "Judging your melody..."}
-          </p>
-        </div>
-
-        {/* Animated lyrics during singing */}
-        {phase === "sing" && (
-          <div className="flex items-center justify-center gap-3 mb-6 h-12">
-            {LYRICS.map((word, i) => (
-              <motion.span
-                key={word}
-                animate={{
-                  scale: activeWord === i ? 1.3 : 0.9,
-                  opacity: activeWord === i ? 1 : 0.4,
-                  color: activeWord === i ? "#7800a0" : "#504253",
-                }}
-                transition={{ duration: 0.3 }}
-                className="font-heading text-[20px] font-extrabold"
-              >
-                {word}
-              </motion.span>
-            ))}
+        {/* Title -- only show when not recording */}
+        {phase !== "sing" && (
+          <div className="text-center mb-6">
+            <h1 className="font-heading text-[24px] font-extrabold text-on-surface italic leading-[30px]">
+              {phase === "ready" && <>Sing: <span className="text-primary">"Ice Cream"</span></>}
+              {phase === "countdown" && "Get Ready..."}
+              {phase === "analyzing" && "Analyzing..."}
+            </h1>
+            <p className="text-[16px] text-on-surface-variant mt-2">
+              {phase === "ready" && "Speak or sing what you're craving!"}
+              {phase === "analyzing" && "Judging your melody..."}
+            </p>
           </div>
         )}
 
@@ -230,6 +199,17 @@ export function SingScreen({ onComplete, onBack }: SingScreenProps) {
               />
             </div>
           </div>
+        )}
+
+        {/* Stop button during singing */}
+        {phase === "sing" && (
+          <button
+            onClick={() => { stopRequestedRef.current = true; }}
+            className="mb-6 bg-secondary text-on-secondary font-heading text-[16px] font-bold px-8 py-3 rounded-full shadow-md active:scale-95 transition-transform flex items-center justify-center gap-2"
+          >
+            <span className="material-symbols-outlined fill text-[20px]">stop_circle</span>
+            Done
+          </button>
         )}
 
         {/* Waveform visualizer */}
