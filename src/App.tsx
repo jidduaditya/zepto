@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { AppShell } from "./components/AppShell";
+import { EntryScreen } from "./screens/EntryScreen";
 
 type Screen = "entry" | "sing" | "result";
 
@@ -20,15 +21,7 @@ export default function App() {
       <AnimatePresence mode="wait">
         {screen === "entry" && (
           <motion.div key="entry" {...pageTransition} className="h-full">
-            <div className="p-6">
-              <p className="text-zepto-text">Entry Screen (Task 5)</p>
-              <button
-                className="mt-4 bg-zepto-purple text-white px-4 py-2 rounded-lg"
-                onClick={() => setScreen("sing")}
-              >
-                Sing for Your Scoop
-              </button>
-            </div>
+            <EntryScreen onSing={() => setScreen("sing")} />
           </motion.div>
         )}
 
