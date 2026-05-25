@@ -1,31 +1,60 @@
 @import "tailwindcss";
 
 @theme {
-  /* Zepto brand approximation - pulled from live app */
-  --color-zepto-purple: #6C2BD9;
-  --color-zepto-purple-dark: #5321A5;
-  --color-zepto-purple-light: #F3EEFF;
-  --color-zepto-green: #0DC143;
-  --color-zepto-green-dark: #0AAF3A;
-  --color-zepto-pink: #E91E8C;
-  --color-zepto-yellow: #FFD60A;
-  --color-zepto-bg: #FFFFFF;
-  --color-zepto-surface: #F5F5F5;
-  --color-zepto-text: #1A1A1A;
-  --color-zepto-text-secondary: #6B7280;
-  --color-zepto-border: #E5E7EB;
+  /* Stitch Design System - Sonic Scoops */
+  --color-primary: #7800a0;
+  --color-primary-container: #9a16ca;
+  --color-on-primary: #ffffff;
+  --color-on-primary-container: #f6ceff;
+  --color-primary-fixed: #f9d8ff;
+  --color-primary-fixed-dim: #edb1ff;
 
-  --font-zepto: "Inter", "SF Pro Display", -apple-system, sans-serif;
+  --color-secondary: #b90043;
+  --color-secondary-container: #e31657;
+  --color-on-secondary: #ffffff;
+  --color-on-secondary-container: #fffbff;
+  --color-secondary-fixed: #ffd9dd;
+
+  --color-tertiary: #51435c;
+  --color-tertiary-container: #6a5a74;
+  --color-tertiary-fixed: #f0dbfb;
+  --color-tertiary-fixed-dim: #d3c0de;
+
+  --color-surface: #f9f9ff;
+  --color-surface-white: #FFFFFF;
+  --color-surface-container: #e7eeff;
+  --color-surface-container-low: #f0f3ff;
+  --color-surface-container-high: #dee8fe;
+  --color-surface-container-highest: #d9e3f8;
+  --color-surface-dim: #d0daf0;
+  --color-surface-tint: #9811c8;
+
+  --color-on-surface: #121c2b;
+  --color-on-surface-variant: #504253;
+  --color-on-background: #121c2b;
+  --color-background: #f9f9ff;
+
+  --color-outline: #827284;
+  --color-outline-variant: #d3c1d5;
+
+  --color-success-green: #10B981;
+  --color-discount-bg: #F0FFF4;
+  --color-price-green: #16A34A;
+  --color-error: #ba1a1a;
+
+  --font-heading: "Plus Jakarta Sans", sans-serif;
+  --font-body: "Plus Jakarta Sans", sans-serif;
+  --font-label: "Inter", sans-serif;
 
   --radius-card: 12px;
-  --radius-button: 10px;
+  --radius-button: 9999px;
   --radius-pill: 9999px;
 }
 
 @layer base {
   html {
-    font-family: var(--font-zepto);
-    background: #F5F5F5;
+    font-family: var(--font-body);
+    background: #f9f9ff;
     -webkit-font-smoothing: antialiased;
   }
 
@@ -33,8 +62,48 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  .no-select {
-    user-select: none;
-    -webkit-user-select: none;
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+  .material-symbols-outlined.fill {
+    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+  }
+
+  @keyframes pulse-wave {
+    0% { transform: scaleY(0.3); opacity: 0.5; }
+    100% { transform: scaleY(1); opacity: 1; }
+  }
+
+  @keyframes pulse-ring {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(154, 22, 202, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(154, 22, 202, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(154, 22, 202, 0); }
+  }
+
+  @keyframes float-up {
+    0% { transform: translateY(0) scale(0.8); opacity: 0; }
+    20% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { transform: translateY(-100px) scale(1.2); opacity: 0; }
+  }
+
+  @keyframes confetti-fall {
+    0% { opacity: 1; top: -10%; transform: translateX(0) rotate(0deg); }
+    100% { opacity: 0; top: 100%; transform: translateX(100px) rotate(360deg); }
   }
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getDiscountTier, type DiscountTier } from "../discounts";
+import { getDiscountTier } from "../discounts";
 
 describe("getDiscountTier", () => {
   it("returns Pitch Perfect tier for score 90-100", () => {

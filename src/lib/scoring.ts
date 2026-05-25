@@ -50,10 +50,11 @@ export function scoreSingingQuality(pitchSamples: number[]): number {
   const valid = pitchSamples.filter((p) => p > 0);
   if (valid.length === 0) return 0;
 
-  // Presence: ratio of valid pitch frames to total expected (~50 samples for 2.5s at 20/s)
-  const expectedSamples = 50;
+  // Presence: ratio of valid pitch frames to expected (~300 samples for 15s at 20/s)
+  // Use sqrt curve so even modest singing gets decent presence credit
+  const expectedSamples = 300;
   const presenceRatio = Math.min(1, valid.length / expectedSamples);
-  const presenceScore = presenceRatio * 40;
+  const presenceScore = Math.sqrt(presenceRatio) * 40;
 
   // Stability: lower coefficient of variation = more controlled singing
   const mean = valid.reduce((a, b) => a + b, 0) / valid.length;
@@ -61,26 +62,28 @@ export function scoreSingingQuality(pitchSamples: number[]): number {
     valid.reduce((a, b) => a + (b - mean) ** 2, 0) / valid.length;
   const stdDev = Math.sqrt(variance);
   const cv = stdDev / mean; // coefficient of variation
-  // cv < 0.02 = very stable, cv > 0.3 = erratic
-  const stabilityScore = Math.max(0, 30 * (1 - Math.min(1, cv / 0.3)));
+  // cv < 0.05 = very stable, cv > 0.5 = erratic (widened from 0.3)
+  const stabilityScore = Math.max(0, 30 * (1 - Math.min(1, cv / 0.5)));
 
   // Melodic range: reward having some pitch variation (singing, not droning)
-  // but not too much (screaming). Sweet spot: 50-400 cents range
+  // but not too much (screaming). Sweet spot: 30-500 cents range
   const sortedValid = [...valid].sort((a, b) => a - b);
   const low = sortedValid[Math.floor(sortedValid.length * 0.1)];
   const high = sortedValid[Math.floor(sortedValid.length * 0.9)];
   const rangeCents = Math.abs(frequencyToCents(high, low));
-  // 0 cents = monotone (0 pts), 50-400 cents = melodic (full pts), >600 = erratic (drops)
+  // 0 cents = monotone, 30-500 cents = melodic (full pts), >800 = erratic
   let rangeScore = 0;
-  if (rangeCents < 50) {
-    rangeScore = (rangeCents / 50) * 30;
-  } else if (rangeCents <= 400) {
+  if (rangeCents < 30) {
+    rangeScore = (rangeCents / 30) * 30;
+  } else if (rangeCents <= 500) {
     rangeScore = 30;
   } else {
-    rangeScore = Math.max(0, 30 * (1 - (rangeCents - 400) / 200));
+    rangeScore = Math.max(0, 30 * (1 - (rangeCents - 500) / 300));
   }
 
-  return Math.round(
-    Math.max(0, Math.min(100, presenceScore + stabilityScore + rangeScore))
-  );
+  // Base bonus: reward actually attempting to sing (minimum 15 pts if any valid samples)
+  const baseBonus = 15;
+
+  const raw = baseBonus + presenceScore + stabilityScore + rangeScore;
+  return Math.round(Math.max(0, Math.min(100, raw)));
 }

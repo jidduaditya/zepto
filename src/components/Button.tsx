@@ -16,18 +16,18 @@ export function Button({
   disabled = false,
 }: ButtonProps) {
   const base =
-    "font-semibold text-[15px] rounded-[10px] px-6 py-3.5 transition-colors active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none";
+    "font-semibold text-[16px] rounded-full px-6 py-4 transition-all active:scale-95 duration-150 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2";
 
   const variants = {
-    primary: "bg-zepto-purple text-white active:bg-zepto-purple-dark",
+    primary: "bg-primary text-on-primary hover:bg-surface-tint shadow-md",
     secondary:
-      "bg-zepto-purple-light text-zepto-purple active:bg-purple-200",
-    ghost: "bg-transparent text-zepto-purple",
+      "bg-surface-white border border-outline-variant text-primary hover:bg-surface-container-low",
+    ghost: "bg-transparent text-primary",
   };
 
   return (
     <motion.button
-      whileTap={{ scale: 0.97 }}
+      whileTap={{ scale: 0.95 }}
       className={`${base} ${variants[variant]} ${fullWidth ? "w-full" : ""}`}
       onClick={onClick}
       disabled={disabled}

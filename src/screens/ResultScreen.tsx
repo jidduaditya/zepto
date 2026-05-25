@@ -3,7 +3,8 @@ import { ScoreGauge } from "../components/ScoreGauge";
 import { ProductCard } from "../components/ProductCard";
 import { Button } from "../components/Button";
 import { getDiscountTier } from "../lib/discounts";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { playRevealChime } from "../lib/sounds";
 
 interface ResultScreenProps {
   score: number;
@@ -15,9 +16,12 @@ const ICE_CREAM_PRODUCTS = [
   {
     name: "Belgian Chocolate Tub",
     brand: "Kwality Wall's",
-    price: 249,
+    price: 224,
+    originalPrice: 249,
     weight: "700 ml",
     imageColor: "#4A2C2A",
+    image: "https://lh3.googleusercontent.com/aida/ADBb0ug8bz60adta9arN9KW41tvpMJfqZfPBa34QXQEXI7f6tGdWP6nL8wAG-HpKWxkm-Q36UDeFQTks2gVxNk42BQwyWVxgQ04Fgq9D0zklyjCVzWROdUf5PvP6AfNAnZ0uOmEeV9WVN8T8uIIg2ti8c5xoDTHAxHLOQ7fd3ED0Y1a7PzDGn43stBn5ozEYrxyDKGAww-FyzYSM8soZucKvpOAJ5_Zc07nOlw3e4zbPxtFMr7NhccXMM7-rtCU",
+    discount: "10% OFF",
   },
   {
     name: "Butterscotch Bliss",
@@ -25,6 +29,8 @@ const ICE_CREAM_PRODUCTS = [
     price: 175,
     weight: "500 ml",
     imageColor: "#D4A843",
+    image: "https://lh3.googleusercontent.com/aida/ADBb0uiVfWNU_OyZZIgrMcrsKngdfPG2MBz7ajsEIkh6VxBC3NzoPiXSyOOMB6CmK8r_72jnsilvLe0_pe0G7nfWvA8CyV7bm9zSwMkkdBH1TRSyZdgQHDOPqQAXAQcsUmR2eB6btwxFL5OOjW2a3UwcjjuT9Tkt6Ee4sNHMsIOG8YxPHe34GFLvBQrwRP4PBmDn--Cp04Sq-wwAriaUC9QV6N5SpH4sdjA14oCukdMSIte9L8pp1VCD-hjeVA",
+    badge: "BEST VALUE",
   },
   {
     name: "Mango Dolly",
@@ -32,6 +38,7 @@ const ICE_CREAM_PRODUCTS = [
     price: 40,
     weight: "60 ml",
     imageColor: "#F5A623",
+    image: "https://lh3.googleusercontent.com/aida/ADBb0uhaIE4WiKsdDVZSqPrW7fc5R4IwMvoEWwdsgdL7q2Q2xbufVa8Kw7z5ohnnRJyba8_8r5cTFQpWaGB9d17723XT0mnBY8sskzBz6MbYCNQuDwLo7Hc8-AxMGCYnW50b1awlsChE_-si6nrPiwvwIKDlC1NSolv244IpXP6afi2AmtNjcuIfkHRI5LDi5yZvA1LTAkZQDrnmQsmYKM15lzySoq5KuO7mZmckV5mHf-slKUzthp9sZLXVrE0",
   },
   {
     name: "Vanilla Cup",
@@ -47,19 +54,39 @@ function generateCode(discount: number): string {
   return `SING${discount}${suffix}`;
 }
 
+// Confetti colors from Stitch
+const CONFETTI_COLORS = ["#9a16ca", "#e31657", "#edb1ff", "#f0dbfb", "#10B981"];
+
 export function ResultScreen({ score, onTryAgain, onApply }: ResultScreenProps) {
   const tier = getDiscountTier(score);
   const [copied, setCopied] = useState(false);
   const code = useMemo(() => generateCode(tier.discount), [tier.discount]);
+  const confettiRef = useRef<HTMLDivElement>(null);
 
-  const gaugeColor =
-    score >= 90
-      ? "#0DC143"
-      : score >= 70
-        ? "#6C2BD9"
-        : score >= 50
-          ? "#F5A623"
-          : "#E91E8C";
+  // Play chime + generate confetti on mount
+  useEffect(() => {
+    playRevealChime();
+    const container = confettiRef.current;
+    if (!container) return;
+    for (let i = 0; i < 40; i++) {
+      const piece = document.createElement("div");
+      piece.style.position = "absolute";
+      piece.style.width = Math.random() > 0.5 ? "10px" : "8px";
+      piece.style.height = Math.random() > 0.5 ? "20px" : "8px";
+      piece.style.backgroundColor = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
+      piece.style.left = Math.random() * 100 + "%";
+      piece.style.top = "-10%";
+      piece.style.opacity = "0";
+      piece.style.animation = `confetti-fall ${Math.random() * 2 + 2}s linear ${Math.random() * 3}s infinite`;
+      if (Math.random() > 0.5) {
+        piece.style.borderRadius = "50%";
+      }
+      container.appendChild(piece);
+    }
+    return () => {
+      container.innerHTML = "";
+    };
+  }, []);
 
   const handleCopy = async () => {
     try {
@@ -78,7 +105,7 @@ export function ResultScreen({ score, onTryAgain, onApply }: ResultScreenProps) 
     const urls: Record<string, string> = {
       whatsapp: `https://wa.me/?text=${encoded}`,
       x: `https://x.com/intent/tweet?text=${encoded}`,
-      instagram: "", // Instagram doesn't have a share URL; copy to clipboard instead
+      instagram: "",
     };
 
     if (platform === "instagram") {
@@ -92,130 +119,183 @@ export function ResultScreen({ score, onTryAgain, onApply }: ResultScreenProps) 
     if (url) window.open(url, "_blank");
   };
 
+  // Compute sub-scores for display
+  const pitchScore = Math.min(100, Math.round(score * 1.03));
+  const melodyScore = Math.min(100, Math.round(score * 0.97));
+
   return (
-    <div className="h-full flex flex-col">
-      <div className="px-4 py-3">
+    <div className="h-full flex flex-col relative overflow-x-hidden">
+      {/* Confetti */}
+      <div ref={confettiRef} className="fixed inset-0 pointer-events-none z-0 overflow-hidden" />
+
+      {/* Close/back button */}
+      <header className="relative z-50 flex items-center justify-between px-4 py-2">
         <button
           onClick={onTryAgain}
-          className="text-zepto-purple text-[15px] font-semibold"
+          className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-white/80 backdrop-blur-sm border border-outline-variant shadow-sm text-on-surface hover:bg-surface-container-low transition-colors active:scale-95"
         >
-          Try Again
+          <span className="material-symbols-outlined">close</span>
         </button>
-      </div>
+      </header>
 
-      <div className="flex-1 flex flex-col items-center px-4 pt-2 gap-4 overflow-y-auto pb-6">
+      <div className="flex-1 flex flex-col items-center px-4 pt-2 gap-6 overflow-y-auto pb-8 relative z-10">
         {/* Score gauge */}
-        <ScoreGauge score={score} color={gaugeColor} />
+        <ScoreGauge score={score} label={tier.label} />
 
-        {/* Tier label */}
+        {/* Rank badge */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 1 }}
+          className="bg-primary-container/10 px-4 py-2 rounded-full border border-primary-container/30"
+        >
+          <p className="text-[16px] text-primary font-bold flex items-center gap-2">
+            <span className="material-symbols-outlined fill text-primary text-[20px]">star</span>
+            {tier.message}
+            <span className="material-symbols-outlined fill text-primary text-[20px]">star</span>
+          </p>
+        </motion.div>
+
+        {/* Progress bars */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.2 }}
-          className="text-center"
+          className="w-full grid grid-cols-1 gap-3"
         >
-          <h2 className="text-[24px] font-bold text-zepto-text">
-            {tier.label}
-          </h2>
-          <p className="text-[14px] text-zepto-text-secondary mt-1">
-            {tier.message}
-          </p>
+          <div className="glass-card rounded-xl p-4 shadow-sm">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-[16px] font-bold text-on-surface flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary">mic</span>
+                Pitch
+              </span>
+              <span className="text-[14px] text-on-surface-variant font-bold">{pitchScore}/100</span>
+            </div>
+            <div className="w-full bg-surface-container-high rounded-full h-3 overflow-hidden border border-outline-variant/30">
+              <motion.div
+                className="bg-primary h-full rounded-full"
+                initial={{ width: "0%" }}
+                animate={{ width: `${pitchScore}%` }}
+                transition={{ delay: 1.4, duration: 0.8 }}
+              />
+            </div>
+          </div>
+          <div className="glass-card rounded-xl p-4 shadow-sm">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-[16px] font-bold text-on-surface flex items-center gap-2">
+                <span className="material-symbols-outlined text-secondary-container">music_note</span>
+                Melody
+              </span>
+              <span className="text-[14px] text-on-surface-variant font-bold">{melodyScore}/100</span>
+            </div>
+            <div className="w-full bg-surface-container-high rounded-full h-3 overflow-hidden border border-outline-variant/30">
+              <motion.div
+                className="bg-secondary-container h-full rounded-full"
+                initial={{ width: "0%" }}
+                animate={{ width: `${melodyScore}%` }}
+                transition={{ delay: 1.6, duration: 0.8 }}
+              />
+            </div>
+          </div>
         </motion.div>
 
-        {/* Discount badge */}
+        {/* Reward card */}
         <motion.div
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 1.6, type: "spring", stiffness: 200 }}
-          className="bg-zepto-green rounded-2xl px-8 py-4 text-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.8, duration: 0.5 }}
+          className="w-full bg-gradient-to-br from-primary-container to-primary rounded-xl p-5 text-white shadow-lg relative"
         >
-          <p className="text-white text-[32px] font-bold">
-            {tier.discount}% OFF
-          </p>
-          <p className="text-white/80 text-[13px] mt-0.5">
-            On your next ice cream order
-          </p>
+          <div className="flex flex-col items-center text-center">
+            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-3 shadow-md">
+              <span className="material-symbols-outlined fill text-[24px] text-primary">redeem</span>
+            </div>
+            <h3 className="text-[18px] font-bold mb-1">Sweet Victory!</h3>
+            <p className="text-[28px] font-extrabold leading-tight">{tier.discount}% OFF</p>
+            <p className="text-[13px] text-white/90 mt-1">On your next ice cream order</p>
+          </div>
         </motion.div>
 
         {/* Discount code */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 2 }}
+          transition={{ delay: 2.2 }}
           className="w-full"
         >
-          <div className="bg-zepto-purple-light rounded-xl p-4 flex items-center justify-between">
+          <div className="glass-card rounded-xl p-4 flex items-center justify-between shadow-sm">
             <div>
-              <p className="text-[11px] text-zepto-text-secondary uppercase tracking-wide">
+              <p className="font-[Inter] text-[11px] text-on-surface-variant uppercase tracking-wider font-bold">
                 Your code
               </p>
-              <p className="text-[20px] font-bold text-zepto-purple tracking-wider mt-0.5">
+              <p className="text-[20px] font-extrabold text-primary tracking-wider mt-0.5 font-heading">
                 {code}
               </p>
             </div>
             <button
               onClick={handleCopy}
-              className="bg-zepto-purple text-white text-[13px] font-semibold px-4 py-2 rounded-lg active:bg-zepto-purple-dark transition-colors"
+              className="bg-primary text-on-primary text-[13px] font-bold px-4 py-2 rounded-full active:bg-surface-tint transition-colors"
             >
               {copied ? "Copied!" : "Copy"}
             </button>
           </div>
         </motion.div>
 
-        {/* Share on socials */}
+        {/* Action buttons */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 2.2 }}
+          transition={{ delay: 2.4 }}
+          className="w-full flex flex-col gap-3"
+        >
+          <Button onClick={onApply} variant="primary" fullWidth>
+            Claim Discount
+            <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+          </Button>
+        </motion.div>
+
+        {/* Share section */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 2.6 }}
           className="w-full"
         >
-          <p className="text-[13px] font-semibold text-zepto-text mb-2">
+          <p className="font-[Inter] text-[12px] font-bold text-on-surface-variant uppercase tracking-wider mb-2">
             Share with friends
           </p>
           <div className="flex gap-3">
             <button
               onClick={() => handleShare("whatsapp")}
-              className="flex-1 bg-[#25D366] text-white text-[13px] font-semibold py-2.5 rounded-xl active:opacity-80 transition-opacity"
+              className="flex-1 bg-[#25D366] text-white text-[13px] font-bold py-2.5 rounded-full active:opacity-80 transition-opacity flex items-center justify-center gap-1.5"
             >
               WhatsApp
             </button>
             <button
               onClick={() => handleShare("instagram")}
-              className="flex-1 bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#F77737] text-white text-[13px] font-semibold py-2.5 rounded-xl active:opacity-80 transition-opacity"
+              className="flex-1 bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#F77737] text-white text-[13px] font-bold py-2.5 rounded-full active:opacity-80 transition-opacity"
             >
               Instagram
             </button>
             <button
               onClick={() => handleShare("x")}
-              className="flex-1 bg-[#0F1419] text-white text-[13px] font-semibold py-2.5 rounded-xl active:opacity-80 transition-opacity"
+              className="flex-1 bg-[#0F1419] text-white text-[13px] font-bold py-2.5 rounded-full active:opacity-80 transition-opacity"
             >
               X
             </button>
           </div>
         </motion.div>
 
-        {/* Apply to cart */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 2.4 }}
-          className="w-full"
-        >
-          <Button onClick={onApply} variant="primary" fullWidth>
-            Apply {tier.discount}% Off to Cart
-          </Button>
-        </motion.div>
-
-        {/* Ice cream options */}
+        {/* Ice cream products */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 2.6 }}
+          transition={{ delay: 2.8 }}
           className="w-full"
         >
-          <p className="text-[15px] font-bold text-zepto-text mb-3">
+          <h2 className="font-heading text-[20px] font-bold text-on-surface mb-3">
             Pick your scoop
-          </p>
+          </h2>
           <div className="grid grid-cols-2 gap-3">
             {ICE_CREAM_PRODUCTS.map((product) => (
               <ProductCard key={product.name} {...product} />
