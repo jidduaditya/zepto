@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@theme {
+  /* Zepto brand approximation - pulled from live app */
+  --color-zepto-purple: #6C2BD9;
+  --color-zepto-purple-dark: #5321A5;
+  --color-zepto-purple-light: #F3EEFF;
+  --color-zepto-green: #0DC143;
+  --color-zepto-green-dark: #0AAF3A;
+  --color-zepto-pink: #E91E8C;
+  --color-zepto-yellow: #FFD60A;
+  --color-zepto-bg: #FFFFFF;
+  --color-zepto-surface: #F5F5F5;
+  --color-zepto-text: #1A1A1A;
+  --color-zepto-text-secondary: #6B7280;
+  --color-zepto-border: #E5E7EB;
+
+  --font-zepto: "Inter", "SF Pro Display", -apple-system, sans-serif;
+
+  --radius-card: 12px;
+  --radius-button: 10px;
+  --radius-pill: 9999px;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-zepto);
+    background: #F5F5F5;
+    -webkit-font-smoothing: antialiased;
+  }
+}
